@@ -1,0 +1,59 @@
+pipeline:
+  agent: any
+
+  environment:
+    REACT_APP: "example-react-master"
+    DEPLOY_DIR: "/var/www/html/example-react-master"
+    NGINX_CONF: "/etc/nginx/sites-available/myapp.local"
+
+  stages:
+    - stage: Prepare
+      steps:
+        - script: |
+            echo "Copying local React app into Jenkins workspace..."
+            cp -r /var/www/example-react-master/client/* .
+
+    - stage: Build
+      steps:
+        - script: |
+            echo "Installing dependencies..."
+            npm install
+            echo "Building the React app..."
+            npm run build
+      post:
+        failure:
+          - script: |
+              echo "Build failed! Sending email notification..."
+              echo "The build for the project has failed. Please check the logs." | mail -s "Jenkins Build Failed: ${currentBuild.fullDisplayName}" rathodindrajit28@gmail.com
+
+    - stage: Test
+      when:
+        expression: BUILD_STATUS == "SUCCESS"
+      steps:
+        - script: |
+            echo "Running tests..."
+            npm test
+
+    - stage: Deploy
+      when:
+        expression: BUILD_STATUS == "SUCCESS"
+      steps:
+        - script: |
+            echo "Deploying the app to Nginx server..."
+            sudo cp -r /var/www/example-react-master/client/build/* $DEPLOY_DIR
+            echo "Reloading Nginx..."
+            sudo systemctl reload nginx
+
+  post:
+    always:
+      - script: |
+          echo "Pipeline finished!"
+
+    success:
+      - script: |
+          echo "Successfully built, tested, and deployed!"
+
+    failure:
+      - script: |
+          echo "Build, test, or deploy failed!"
+
