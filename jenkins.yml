@@ -4,7 +4,7 @@ pipeline:
   environment:
     REACT_APP: "example-react-master"
     DEPLOY_DIR: "/var/www/html/example-react-master"
-    NGINX_CONF: "/etc/nginx/sites-available/myapp.local"
+    NGINX_CONF: "/etc/nginx/sites-available/example-react-master.conf"
 
   stages:
     - stage: Prepare
@@ -23,8 +23,7 @@ pipeline:
       post:
         failure:
           - script: |
-              echo "Build failed! Sending email notification..."
-              echo "The build for the project has failed. Please check the logs." | mail -s "Jenkins Build Failed: ${currentBuild.fullDisplayName}" rathodindrajit28@gmail.com
+              echo "Build failed! Please check the logs for errors."
 
     - stage: Test
       when:
@@ -56,4 +55,6 @@ pipeline:
     failure:
       - script: |
           echo "Build, test, or deploy failed!"
+
+
 
